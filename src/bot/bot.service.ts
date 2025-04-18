@@ -42,7 +42,7 @@ export class BotService implements OnModuleInit {
   onModuleInit() {
     this.client.on('qr', (qr) => {
       this.logger.log(
-        `QrCode: http://localhost:${3000}/api/bot/qrcode/421a24c1-e02d-44b3-af45-267e1b5e306c`,
+        `QrCode: https://workaround-production.up.railway.app/api/bot/qrcode/421a24c1-e02d-44b3-af45-267e1b5e306c`,
       );
       this.eventEmitter.emit('qrcode.created', qr);
     });
