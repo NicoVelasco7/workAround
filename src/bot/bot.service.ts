@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleInit, BadRequestException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Client, LocalAuth } from 'whatsapp-web.js';
+import { Client, LocalAuth, NoAuth } from 'whatsapp-web.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
@@ -10,7 +10,7 @@ const rm = promisify(fs.rm);
 @Injectable()
 export class BotService implements OnModuleInit {
   private client: Client = new Client({
-    authStrategy: new LocalAuth(),
+    authStrategy: new NoAuth(),
     puppeteer: {
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
