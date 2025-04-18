@@ -47,12 +47,12 @@ export class BotService implements OnModuleInit {
       const finalNumber = `54${to}`; // Add the country code to the number
       this.logger.log(`Attempting to send message to ${finalNumber}`);
       const numberDetails = await this.client.getNumberId(finalNumber);
-
+      this.logger.log(`Number details: ${JSON.stringify(numberDetails)}`);
       if (!numberDetails) {
         this.logger.warn(`Phone number ${to} (${finalNumber}) is not registered on WhatsApp.`);
         throw new Error(`The phone number ${to} is not registered on WhatsApp.`);
       }
-
+      this.logger.log(`before the await`);
       await this.client.sendMessage(numberDetails._serialized, message);
       this.logger.log(`WhatsApp message sent to ${to}: ${message}`);
     } catch (error) {
