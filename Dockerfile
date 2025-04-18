@@ -56,14 +56,19 @@ RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add
 # Set the working directory
 WORKDIR /app
 
-COPY package*.json ./
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
 
+COPY package*.json ./
+COPY prisma ./prisma/
 
 # Copy your application files into the container
 COPY . .
 
 # Install your Node.js application dependencies
 RUN npm install
+
+RUN npx prisma generate
 
 # Build your application
 RUN npm run build

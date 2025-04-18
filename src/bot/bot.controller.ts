@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, Res } from '@nestjs/common';
+import { Controller, Get, Param, Post, Query, Res } from '@nestjs/common';
 import { BotService } from './bot.service';
 import * as QRCode from 'qrcode';
 import { Response } from 'express';
@@ -14,14 +14,21 @@ export class BotController {
     this.qrCode = qrCode;
   }
 
-  @Get('qrcode')
-  async getQrCode(@Res() response: Response) {
+  @Get('qrcode/:enterpriseId')
+  async getQrCode(@Res() response: Response, @Param('enterpriseId') enterpriseId: string) {
     if (!this.qrCode) {
       return response.status(404).send('QR code not found');
     }
 
+    this.botService.setEnterpriseId(enterpriseId);
+
     response.setHeader('Content-Type', 'image/png');
     QRCode.toFileStream(response, this.qrCode);
+  }
+
+  @Post('disconnect')
+  async disconnect() {
+    await this.botService.disconnect();
   }
 
   @Post('send-message')
@@ -29,10 +36,5 @@ export class BotController {
     console.log('to:', to);
     console.log('message:', message);
     await this.botService.sendMessage(to, message);
-  }
-
-  @Post('disconnect')
-  async disconnect() {
-    await this.botService.disconnect();
   }
 }
