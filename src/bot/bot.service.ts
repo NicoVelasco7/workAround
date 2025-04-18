@@ -50,163 +50,163 @@ export class BotService implements OnModuleInit {
       this.logger.log("You're connected successfully!");
     });
 
-    this.client.on('message', async (msg) => {
-      this.logger.verbose(`${msg.from}: ${msg.body}`);
+    // this.client.on('message', async (msg) => {
+    //   this.logger.verbose(`${msg.from}: ${msg.body}`);
 
-      // Get or initialize the user's state
-      if (!this.userStates.has(msg.from)) {
-        this.userStates.set(msg.from, {
-          numOrderCount: 0,
-          idPadre: '',
-          advance: 0,
-          enter: false,
-        });
-      }
+    //   // Get or initialize the user's state
+    //   if (!this.userStates.has(msg.from)) {
+    //     this.userStates.set(msg.from, {
+    //       numOrderCount: 0,
+    //       idPadre: '',
+    //       advance: 0,
+    //       enter: false,
+    //     });
+    //   }
 
-      const userState = this.userStates.get(msg.from);
+    //   const userState = this.userStates.get(msg.from);
 
-      // Ensure userState is defined
-      if (!userState) {
-        this.logger.error(`User state for ${msg.from} is undefined.`);
-        return;
-      }
+    //   // Ensure userState is defined
+    //   if (!userState) {
+    //     this.logger.error(`User state for ${msg.from} is undefined.`);
+    //     return;
+    //   }
 
-      // Prevent overlapping message handling for the same user
-      if (userState.processing) {
-        this.logger.warn(
-          `User ${msg.from} is already being processed. Ignoring this message.`,
-        );
-        return;
-      }
+    //   // Prevent overlapping message handling for the same user
+    //   if (userState.processing) {
+    //     this.logger.warn(
+    //       `User ${msg.from} is already being processed. Ignoring this message.`,
+    //     );
+    //     return;
+    //   }
 
-      try {
-        // Mark the user as being processed
-        userState.processing = true;
+    //   try {
+    //     // Mark the user as being processed
+    //     userState.processing = true;
 
-        const messages = await this.prisma.messages.findMany({
-          where: { enterpriseId: this.enterpriseId },
-          orderBy: { numOrder: 'asc' },
-        });
+    //     const messages = await this.prisma.messages.findMany({
+    //       where: { enterpriseId: this.enterpriseId },
+    //       orderBy: { numOrder: 'asc' },
+    //     });
 
-        let m;
+    //     let m;
 
-        if (userState.enter) {
-          const childCount = await this.prisma.messages.count({
-            where: { parentMessageId: userState.idPadre },
-          });
+    //     if (userState.enter) {
+    //       const childCount = await this.prisma.messages.count({
+    //         where: { parentMessageId: userState.idPadre },
+    //       });
 
-          const selectedOption = parseInt(msg.body, 10);
+    //       const selectedOption = parseInt(msg.body, 10);
 
-          if (
-            !isNaN(selectedOption) &&
-            selectedOption > 0 &&
-            selectedOption <= childCount
-          ) {
-            userState.advance = selectedOption;
-            userState.numOrderCount += userState.advance;
-          } else {
-            await msg.reply(
-              `Opcion Invalida. Por favor seleccione un numero entre 1 y ${childCount}.`,
-            );
-            const msgReturn = await this.prisma.messages.findUnique({
-              where: { id: userState.idPadre },
-            });
+    //       if (
+    //         !isNaN(selectedOption) &&
+    //         selectedOption > 0 &&
+    //         selectedOption <= childCount
+    //       ) {
+    //         userState.advance = selectedOption;
+    //         userState.numOrderCount += userState.advance;
+    //       } else {
+    //         await msg.reply(
+    //           `Opcion Invalida. Por favor seleccione un numero entre 1 y ${childCount}.`,
+    //         );
+    //         const msgReturn = await this.prisma.messages.findUnique({
+    //           where: { id: userState.idPadre },
+    //         });
 
-            if (msgReturn) {
-              await msg.reply(msgReturn.body);
-            } else {
-              this.logger.warn(`No message found for id: ${userState.idPadre}`);
-            }
+    //         if (msgReturn) {
+    //           await msg.reply(msgReturn.body);
+    //         } else {
+    //           this.logger.warn(`No message found for id: ${userState.idPadre}`);
+    //         }
 
-            return;
-          }
-        }
+    //         return;
+    //       }
+    //     }
 
-        this.logger.log(`numOrderCount: ${userState.numOrderCount}`);
+    //     this.logger.log(`numOrderCount: ${userState.numOrderCount}`);
 
-        for (let i = userState.numOrderCount; i <= messages.length; ) {
-          if (
-            messages[i]?.parentMessageId === null &&
-            messages[i]?.option === 'MENU'
-          ) {
-            m = messages[i]?.body;
-            await sleep(2000); // Delay to avoid being flagged by WhatsApp
-            await msg.reply(m);
-            userState.enter = true;
-            userState.idPadre = messages[i]?.id;
-            break;
-          }
+    //     for (let i = userState.numOrderCount; i <= messages.length; ) {
+    //       if (
+    //         messages[i]?.parentMessageId === null &&
+    //         messages[i]?.option === 'MENU'
+    //       ) {
+    //         m = messages[i]?.body;
+    //         await sleep(2000); // Delay to avoid being flagged by WhatsApp
+    //         await msg.reply(m);
+    //         userState.enter = true;
+    //         userState.idPadre = messages[i]?.id;
+    //         break;
+    //       }
 
-          if (
-            messages[i]?.parentMessageId === userState.idPadre &&
-            messages[i]?.option === 'MENU' &&
-            messages[i]?.trigger?.toLowerCase() === msg.body.toLowerCase()
-          ) {
-            const counti = await this.prisma.messages.count({
-              where: { parentMessageId: messages[i]?.id },
-            });
-            const x = await this.prisma.messages.findUnique({
-              where: { id: userState?.idPadre },
-            });
-            m = messages[i]?.body;
-            userState.enter = true;
-            await sleep(2000); // Delay to avoid being flagged by WhatsApp
-            await msg.reply(m);
-            userState.idPadre = messages[i]?.id;
-            break;
-          }
+    //       if (
+    //         messages[i]?.parentMessageId === userState.idPadre &&
+    //         messages[i]?.option === 'MENU' &&
+    //         messages[i]?.trigger?.toLowerCase() === msg.body.toLowerCase()
+    //       ) {
+    //         const counti = await this.prisma.messages.count({
+    //           where: { parentMessageId: messages[i]?.id },
+    //         });
+    //         const x = await this.prisma.messages.findUnique({
+    //           where: { id: userState?.idPadre },
+    //         });
+    //         m = messages[i]?.body;
+    //         userState.enter = true;
+    //         await sleep(2000); // Delay to avoid being flagged by WhatsApp
+    //         await msg.reply(m);
+    //         userState.idPadre = messages[i]?.id;
+    //         break;
+    //       }
 
-          if (
-            messages[i]?.parentMessageId === userState.idPadre &&
-            messages[i]?.trigger?.toLowerCase() === msg.body.toLowerCase()
-          ) {
-            const counti = await this.prisma.messages.count({
-              where: { parentMessageId: messages[i]?.id },
-            });
-            const x = await this.prisma.messages.findUnique({
-              where: { id: userState.idPadre },
-            });
-            m = messages[i]?.body;
-            await sleep(2000); // Delay to avoid being flagged by WhatsApp
-            await msg.reply(m);
-            userState.enter = false;
-            userState.idPadre = messages[i]?.id;
+    //       if (
+    //         messages[i]?.parentMessageId === userState.idPadre &&
+    //         messages[i]?.trigger?.toLowerCase() === msg.body.toLowerCase()
+    //       ) {
+    //         const counti = await this.prisma.messages.count({
+    //           where: { parentMessageId: messages[i]?.id },
+    //         });
+    //         const x = await this.prisma.messages.findUnique({
+    //           where: { id: userState.idPadre },
+    //         });
+    //         m = messages[i]?.body;
+    //         await sleep(2000); // Delay to avoid being flagged by WhatsApp
+    //         await msg.reply(m);
+    //         userState.enter = false;
+    //         userState.idPadre = messages[i]?.id;
 
-            if (messages[i]?.finishLane === true) {
-              userState.numOrderCount = 0;
-              break;
-            } else {
-              break;
-            }
-          }
+    //         if (messages[i]?.finishLane === true) {
+    //           userState.numOrderCount = 0;
+    //           break;
+    //         } else {
+    //           break;
+    //         }
+    //       }
 
-          if (i == messages.length - 1) {
-            m = messages[i]?.body;
-            await sleep(2000); // Delay to avoid being flagged by WhatsApp
-            await msg.reply(m);
-            userState.numOrderCount = 0;
-            userState.enter = false;
-            break;
-          }
+    //       if (i == messages.length - 1) {
+    //         m = messages[i]?.body;
+    //         await sleep(2000); // Delay to avoid being flagged by WhatsApp
+    //         await msg.reply(m);
+    //         userState.numOrderCount = 0;
+    //         userState.enter = false;
+    //         break;
+    //       }
 
-          if (userState.numOrderCount === 0) {
-            m = messages[i]?.body;
-            await sleep(2000); // Delay to avoid being flagged by WhatsApp
-            await msg.reply(m);
-            userState.enter = false;
-            userState.numOrderCount += 1;
-          }
-          i++;
-        }
-      } catch (error) {
-        this.logger.error(
-          `Error processing message for user ${msg.from}: ${error.message}`,
-        );
-      } finally {
-        // Mark the user as no longer being processed
-        userState.processing = false;
-      }
-    });
+    //       if (userState.numOrderCount === 0) {
+    //         m = messages[i]?.body;
+    //         await sleep(2000); // Delay to avoid being flagged by WhatsApp
+    //         await msg.reply(m);
+    //         userState.enter = false;
+    //         userState.numOrderCount += 1;
+    //       }
+    //       i++;
+    //     }
+    //   } catch (error) {
+    //     this.logger.error(
+    //       `Error processing message for user ${msg.from}: ${error.message}`,
+    //     );
+    //   } finally {
+    //     // Mark the user as no longer being processed
+    //     userState.processing = false;
+    //   }
+    // });
 
     this.client.initialize();
   }
