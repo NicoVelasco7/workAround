@@ -31,7 +31,7 @@ export class BotService implements OnModuleInit {
       authStrategy: new NoAuth(),
       puppeteer: {
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
         protocolTimeout: 600000, // Increase the protocol timeout to 60 seconds
       },
     });
