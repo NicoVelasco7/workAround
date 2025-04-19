@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Client, LocalAuth } from 'whatsapp-web.js';
+import { Client, LocalAuth, NoAuth } from 'whatsapp-web.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
@@ -28,9 +28,9 @@ export class BotService implements OnModuleInit {
 
   constructor(private eventEmitter: EventEmitter2) {
     this.client = new Client({
-      authStrategy: new LocalAuth(),
+      authStrategy: new NoAuth(),
       puppeteer: {
-        headless: true,
+        headless: false,
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
         protocolTimeout: 600000, // Increase the protocol timeout to 60 seconds
       },
