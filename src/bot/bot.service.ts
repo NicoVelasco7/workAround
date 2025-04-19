@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Client, LocalAuth } from 'whatsapp-web.js';
 import * as fs from 'fs';
@@ -15,14 +11,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 @Injectable()
 export class BotService implements OnModuleInit {
-  private client: Client = new Client({
-    authStrategy: new LocalAuth(),
-    puppeteer: {
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      protocolTimeout: 600000, // Increase the protocol timeout to 60 seconds
-    },
-  });
+  private client: Client;
   private enterpriseId: string = '';
   private prisma = new PrismaClient();
   private readonly logger = new Logger(BotService.name);
@@ -37,7 +26,16 @@ export class BotService implements OnModuleInit {
     }
   > = new Map();
 
-  constructor(private eventEmitter: EventEmitter2) {}
+  constructor(private eventEmitter: EventEmitter2) {
+    this.client = new Client({
+      authStrategy: new LocalAuth(),
+      puppeteer: {
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        protocolTimeout: 600000, // Increase the protocol timeout to 60 seconds
+      },
+    });
+  }
 
   onModuleInit() {
     this.client.on('qr', (qr) => {
@@ -247,17 +245,15 @@ export class BotService implements OnModuleInit {
 
   async sendMessage(to: string, message: string): Promise<void> {
     const finalNumber = `54${to}`; // Add the country code to the number
-    this.logger.log(`Attempting to send message to ${finalNumber}`);
+
     const numberDetails = await this.client.getNumberId(finalNumber);
-    this.logger.log(`Number details: ${JSON.stringify(numberDetails)}`);
+
     if (!numberDetails) {
-      this.logger.warn(
-        `Phone number ${to} (${finalNumber}) is not registered on WhatsApp.`,
-      );
       throw new Error(`The phone number ${to} is not registered on WhatsApp.`);
     }
-    this.logger.log(`before the await`);
+
     await this.client.sendMessage(numberDetails._serialized, message);
-    this.logger.log(`WhatsApp message sent to ${to}: ${message}`);
+
+    console.log(`WhatsApp message sent to ${to}: ${message}`);
   }
 }
